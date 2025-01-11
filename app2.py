@@ -1,10 +1,9 @@
 from flask import Flask, render_template, redirect, url_for
 from flask_wtf import FlaskForm  
-from wtforms import StringField,PasswordField,SubmitField
-from wtforms.validators import DataRequired, Email, ValidationError 
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import DataRequired, Email
 import bcrypt
 from flask_mysqldb import MySQL
-
 
 app = Flask(__name__, template_folder='templates')
 
@@ -15,40 +14,40 @@ app.config['MYSQL_PASSWORD'] = ''
 app.config['MYSQL_DB'] = 'mydatabase'
 app.secret_key = 'your_secret_key_here'
 
-
 mysql = MySQL(app)
 
 class RegisterForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired()])
     email = StringField("Email", validators=[DataRequired(), Email()])
-    password = StringField("Password", validators=[DataRequired()])
+    password = PasswordField("Password", validators=[DataRequired()])
     submit = SubmitField("Register")      
 
-
 @app.route('/')
-def Hello():
+def hello():
     return render_template('index.html')
 
-@app.route('/register',) #method=['GET', 'POST']
+@app.route('/register', methods=['GET', 'POST'])
 def register1():
     form = RegisterForm()
-    if form.validate_on_submit():
+    if form.validate_on_submit():  # Only process if form is valid
         name = form.name.data
         email = form.email.data
         password = form.password.data
         
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'),bcrypt.gensalt())
-    
-    # database(store in to data base)  
-        cursor = mysql.connection.cursor()
-        cursor.execute("INSERT INTO users (name, email, password) VALUES (%s,%s,%s)", (name,email,hashed_password))
-        mysql.connect.commit()
-        cursor.close()
-    
-        return redirect(url_for('login1'))
+        # Hash the password before storing it
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         
-    return render_template('register.html',form=form )
-
+        # Insert data into MySQL database
+        cursor = mysql.connection.cursor()
+        cursor.execute("INSERT INTO users (name, email, password) VALUES (%s, %s, %s)",(name, email, hashed_password))
+        mysql.connection.commit()  # Correct commit method
+        cursor.close()
+        
+        # Redirect to login after successful registration
+        return redirect(url_for('login1'))
+    
+    # Render the registration page if form is not valid or GET request
+    return render_template('register.html', form=form)
 
 @app.route('/login')
 def login1():
@@ -57,7 +56,6 @@ def login1():
 @app.route('/dashboard')
 def dashboard1(): 
     return render_template('dashboard.html')
-
 
 if __name__ == '__main__':
     app.run(debug=True)
