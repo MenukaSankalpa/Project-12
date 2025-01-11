@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, session, flash 
+from flask import Flask, render_template, redirect, url_for, session, flash,request
 from flask_wtf import FlaskForm  
 from wtforms import StringField,PasswordField,SubmitField
 from wtforms.validators import DataRequired, Email, ValidationError 
@@ -26,9 +26,10 @@ class RegisterForm(FlaskForm):
     
 
 class LoginForm(FlaskForm):
-    email = StringField("Email", validators=[DataRequired(), Email()])
-    password = StringField("Password", validators=[DataRequired()])
-    submit = SubmitField("Register")         
+    name = StringField("Name", validators=[DataRequired()])
+    email = StringField("Email", validators=[DataRequired()])
+    password = PasswordField("Password", validators=[DataRequired()])
+    submit = SubmitField("Login")         
 
 
 @app.route('/')
@@ -56,7 +57,7 @@ def register1():
     return render_template('register.html',form=form )
 
 
-@app.route('/login')
+@app.route('/login',methods=['GET', 'POST'])
 def login1():
     form = LoginForm()
     if form.validate_on_submit():
@@ -65,17 +66,18 @@ def login1():
     
     # database(store in to data base)  
         cursor = mysql.connection.cursor()
-        cursor.execute("SELECT * FROM users WHERE email=%s", (email))
+        cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
         user = cursor.fetchone() 
         cursor.close()
         if user and bcrypt.checkpw(password.encode('utf-8'), user[3].encode('utf-8')):
             session['user_id'] = user[0]
+            flash("Login Successful!")
             return redirect(url_for('dashboard1')) 
         else:
-            flash("Login Failed.Please check your password and username")
+            flash("Login Failed.Please check your password and username","danger")
             return redirect(url_for('login1'))
     
-    return render_template('login1.html', form=form)
+    return render_template('login.html', form=form)
 
 @app.route('/dashboard')
 def dashboard1(): 
