@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, session, flash 
 from flask_wtf import FlaskForm  
 from wtforms import StringField,PasswordField,SubmitField
 from wtforms.validators import DataRequired, Email, ValidationError 
@@ -22,7 +22,13 @@ class RegisterForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired()])
     email = StringField("Email", validators=[DataRequired(), Email()])
     password = StringField("Password", validators=[DataRequired()])
-    submit = SubmitField("Register")      
+    submit = SubmitField("Register") 
+    
+
+class LoginForm(FlaskForm):
+    email = StringField("Email", validators=[DataRequired(), Email()])
+    password = StringField("Password", validators=[DataRequired()])
+    submit = SubmitField("Register")         
 
 
 @app.route('/')
@@ -52,7 +58,24 @@ def register1():
 
 @app.route('/login')
 def login1():
-    return render_template('login.html')
+    form = LoginForm()
+    if form.validate_on_submit():
+        email = form.email.data
+        password = form.password.data
+    
+    # database(store in to data base)  
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT * FROM users WHERE email=%s", (email))
+        user = cursor.fetchone() 
+        cursor.close()
+        if user and bcrypt.checkpw(password.encode('utf-8'), user[3].encode('utf-8')):
+            session['user_id'] = user[0]
+            return redirect(url_for('dashboard1')) 
+        else:
+            flash("Login Failed.Please check your password and username")
+            return redirect(url_for(login1))
+    
+    return render_template('login1.html', form=form)
 
 @app.route('/dashboard')
 def dashboard1(): 
