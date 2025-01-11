@@ -29,7 +29,7 @@ class RegisterForm(FlaskForm):
 def Hello():
     return render_template('index.html')
 
-@app.route('/register',) #method=['GET', 'POST']
+@app.route('/register',methods=['GET', 'POST']) 
 def register1():
     form = RegisterForm()
     if form.validate_on_submit():
@@ -42,7 +42,7 @@ def register1():
     # database(store in to data base)  
         cursor = mysql.connection.cursor()
         cursor.execute("INSERT INTO users (name, email, password) VALUES (%s,%s,%s)", (name,email,hashed_password))
-        mysql.connect.commit()
+        mysql.connection.commit()
         cursor.close()
     
         return redirect(url_for('login1'))
