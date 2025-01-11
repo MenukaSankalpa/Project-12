@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect, url_for
 from flask_wtf import FlaskForm  
 from wtforms import StringField,PasswordField,SubmitField
 from wtforms.validators import DataRequired, Email, ValidationError 
@@ -15,12 +15,14 @@ app.config['MYSQL_PASSWORD'] = ''
 app.config['MYSQL_DB'] = 'mydatabase'
 app.secret_key = 'your_secret_key_here'
 
+
+mysql = MySQL(app)
+
 class RegisterForm(FlaskForm):
     name = StringField("Name",validators=[DataRequired()])
     email = StringField("Email",validators=[DataRequired(), Email()])
     password = StringField("Password",validators=[DataRequired()])
-    submit = SubmitField("Register")
-       
+    submit = SubmitField("Register")      
 
 @app.route('/')
 def Hello():
@@ -36,9 +38,15 @@ def register1():
         
         hashed_password = bcrypt.hashpw(password.encode('utf-8'),bcrypt.gensalt())
     
-    # database(store in to data base)    
+    # database(store in to data base)  
+    cursor = mysql.connection.cursor()
+    cursor.execute("INSERT INTO users (name,email,password) Values (%s,%s,%s)", (name,email,password))
+    mysql.connect.commit()
+    cursor.close()
+    
+    return redirect(url_for('login'))
         
-    return render_template('register.html')
+    return render_template('register.html',form=form )
 
 @app.route('/login')
 def login1():
