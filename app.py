@@ -73,7 +73,7 @@ def login1():
             return redirect(url_for('dashboard1')) 
         else:
             flash("Login Failed.Please check your password and username")
-            return redirect(url_for(login1))
+            return redirect(url_for('login1'))
     
     return render_template('login1.html', form=form)
 
