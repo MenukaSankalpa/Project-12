@@ -1,10 +1,10 @@
-from flask import Flask, render_template, redirect, url_for, session, flash,request
+from flask import Flask, render_template, redirect, url_for, session, flash
 from flask_wtf import FlaskForm  
 from wtforms import StringField,PasswordField,SubmitField
 from wtforms.validators import DataRequired, Email, ValidationError 
 import bcrypt
 from flask_mysqldb import MySQL
-
+   
 
 app = Flask(__name__, template_folder='templates')
 
@@ -21,7 +21,7 @@ mysql = MySQL(app)
 class RegisterForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired()])
     email = StringField("Email", validators=[DataRequired(), Email()])
-    password = StringField("Password", validators=[DataRequired()])
+    password = PasswordField("Password", validators=[DataRequired()])
     submit = SubmitField("Register") 
     
 
@@ -74,15 +74,24 @@ def login1():
             flash("Login Successful!")
             return redirect(url_for('dashboard1')) 
         else:
-            flash("Login Failed.Please check your password and username","danger")
+            flash("Login Failed.Please check your password and username","alert-danger")
             return redirect(url_for('login1'))
     
-    return render_template('login.html', form=form)
+    return render_template('dashboard.html', form=form)
 
 @app.route('/dashboard')
 def dashboard1(): 
-    return render_template('dashboard.html')
-
+    if 'user_id' in session:
+        user_id = session['user_id']
+        
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT * FROM users where id=%s",(user_id))
+        user = cursor.fetchone()
+        cursor.close()
+        
+        if user:
+            return render_template('dashboard.html',user=user)
+    return render_template('login1',user=user)
 
 if __name__ == '__main__':
     app.run(debug=True)
